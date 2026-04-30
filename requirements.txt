@@ -1,0 +1,15 @@
+pandas
+numpy
+pyarrow
+requests
+PyYAML
+scikit-learn
+xgboost
+joblib
+matplotlib
+seaborn
+fastf1
+sqlalchemy
+psycopg2-binary
+fastapi
+uvicorn

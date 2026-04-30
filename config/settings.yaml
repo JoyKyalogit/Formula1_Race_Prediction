@@ -1,0 +1,13 @@
+project:
+  random_state: 42
+  train_test_split_season: 2025
+
+paths:
+  raw: data/raw
+  processed: data/processed
+  artifacts: artifacts
+  metrics: metrics
+
+api:
+  jolpica_base_url: "https://api.jolpi.ca/ergast/f1"
+  openf1_base_url: "https://api.openf1.org/v1"
