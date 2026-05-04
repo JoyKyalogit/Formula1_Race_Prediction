@@ -189,3 +189,16 @@ uvicorn app.api:app --reload
 
 Then open the local app URL printed by Uvicorn (usually `http://127.0.0.1:8000`).
 
+## Notes and Limitations
+
+- Predictions are probabilistic estimates, not guaranteed outcomes.
+- Performance depends on data freshness and feature quality.
+- Current model is classification-focused (`top3` / `winner`), not full finishing order simulation.
+- Optional OpenF1/FastF1 ingestion is included for future enrichment but not required for the current baseline pipeline.
+
+## Future Improvements
+
+- Add uncertainty calibration and probability reliability plots
+- Include weather/session features in final model table
+- Add circuit-type or team strategy features
+- Automate end-to-end pipeline with one orchestrated command
