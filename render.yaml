@@ -1,0 +1,20 @@
+# Render Blueprint: https://render.com/docs/infrastructure-as-code
+# New > Blueprint in the Render dashboard, select this repo.
+#
+# Before first deploy: run the pipeline locally, then commit and push
+#   data/processed/model_table.parquet
+#   artifacts/is_top3_xgb.pkl
+#   artifacts/is_winner_xgb.pkl
+# (These paths are allowed by .gitignore for deployment.)
+
+services:
+  - type: web
+    name: f1-race-predictor
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.api:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /api/health
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.8"

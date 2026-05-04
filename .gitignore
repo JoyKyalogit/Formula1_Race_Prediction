@@ -2,6 +2,10 @@
 __pycache__/
 *.pyc
 .ipynb_checkpoints/
-data/
-artifacts/
+# Raw downloads stay local; commit processed table + model pickles for hosting.
+data/raw/
+data/processed/*
+!data/processed/model_table.parquet
+artifacts/*
+!artifacts/*.pkl
 .env
