@@ -4,63 +4,31 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>F1 Race Predictor</title>
-  <link rel="stylesheet" href="styles.css?v=2" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
-<body>
-  <div class="container">
-    <h1>Formula 1 Race Predictor</h1>
-    <div id="error" class="error hidden"></div>
+<body class="home-body">
+  <div class="home home-simple">
+    <nav class="site-nav">
+      <a class="nav-brand" href="/">F1 Race Predictor</a>
+      <a class="nav-link" href="/predict.html">Dashboard</a>
+    </nav>
 
-    <section>
-      <h2>Recent Driver Form</h2>
-      <table id="summaryTable">
-        <thead>
-          <tr>
-            <th>Driver</th>
-            <th>Average Finish Position (Last 5 Races)</th>
-            <th>Total Points (Last 5 Races)</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </section>
-
-    <section>
-      <h2>Race Prediction</h2>
-      <div class="controls">
-        <div class="control-field">
-          <label for="seasonSelect">Season</label>
-          <select id="seasonSelect" aria-label="Season"></select>
+    <section class="home-hero home-hero-simple">
+      <div class="home-hero-copy">
+        <div class="hero-accent" aria-hidden="true"></div>
+        <h1>F1 Race Predictor</h1>
+        <p class="home-hero-lead">Race predictions &amp; driver analytics</p>
+        <div class="home-cta-row">
+          <a class="btn-predict home-cta" href="/predict.html">
+            <span class="btn-label">Open Dashboard</span>
+            <span class="btn-arrow" aria-hidden="true">→</span>
+          </a>
         </div>
-        <div class="control-field">
-          <label for="roundSelect">Race Round</label>
-          <select id="roundSelect" aria-label="Race Round"></select>
-        </div>
-        <div class="control-field">
-          <label for="targetSelect">Prediction Target</label>
-          <select id="targetSelect" aria-label="Prediction Target">
-            <option value="is_top3">Finish in Top 3</option>
-            <option value="is_winner">Win the Race</option>
-          </select>
-        </div>
-        <button id="predictBtn">Predict Results</button>
       </div>
-
-      <table id="predictionTable">
-        <thead>
-          <tr>
-            <th>Driver</th>
-            <th>Constructor</th>
-            <th>Starting Grid Position</th>
-            <th>Qualifying Position</th>
-            <th>Predicted Probability</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
     </section>
   </div>
-
-  <script src="app.js?v=2"></script>
 </body>
 </html>

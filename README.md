@@ -1,6 +1,7 @@
 # Formula 1 Race Prediction Project
 
 An end-to-end machine learning project that predicts race outcomes in Formula 1 using historical race data, qualifying data, and engineered form features.
+
 ## Live Demo
 https://f1-race-predictor-t21v.onrender.com/
 
@@ -42,10 +43,11 @@ The app provides:
 - `evaluate.py`: Evaluates holdout data and writes metrics
 
 `frontend/`
-- `index.html`, `styles.css`, `app.js`: Dashboard UI
+- `index.html`: home page
+- `predict.html`, `styles.css`, `app.js`: prediction dashboard UI
 
 `data/`
-- `raw/`: downloaded source datasets
+- `raw/`: downloaded source datasets (kept local; not required in git)
 - `processed/`: cleaned and feature-engineered datasets
 
 `artifacts/`
@@ -55,13 +57,50 @@ The app provides:
 - Evaluation JSON outputs
 
 `config/`
-- `settings.yaml`: base settings and paths
+- `settings.yaml`: base settings and public API base URLs (no secrets)
+
+## Data Sources & Training Data
+
+### Primary source (baseline models)
+
+The models are trained on **historical Formula 1 race results and qualifying data** obtained from **Jolpica**, a public Ergast-compatible F1 API.
+
+- **API:** `https://api.jolpi.ca/ergast/f1`
+- **How it is obtained:** `python -m src.ingestion.ingest_jolpica` downloads JSON over HTTP (no API key required), then saves parquet files under `data/raw/`
+- **What is downloaded:**
+  - Race results: season, round, circuit, driver, constructor, grid, finish position, points, status
+  - Qualifying: qualifying position (and Q1/Q2/Q3 times when present)
+- **Typical season range used in this project:** **2018–2025** (configurable via `--start-season` / `--end-season`)
+
+### What the models were trained on
+
+After cleaning and feature engineering, training uses `data/processed/model_table.parquet`.
+
+- **Train set:** seasons **before 2025** (`season < 2025`) — roughly **2018–2024** race history in the default workflow
+- **Holdout / evaluation:** seasons **2025 and later**
+- **Targets:**
+  - `is_top3` — finished in positions 1–3
+  - `is_winner` — finished in position 1
+- **Main inputs:** grid, qualifying position, rolling driver/constructor form, track history, DNF trend, plus constructor and circuit categories
+
+### Optional sources (not required for the current baseline)
+
+Scripts exist for enrichment but are **not** required for the shipped baseline models:
+
+- OpenF1 (`ingest_openf1.py`) — meetings, sessions, laps
+- FastF1 (`ingest_fastf1.py`) — detailed laps / weather
+
+### Secrets & credentials
+
+- The **Jolpica baseline pipeline does not use API keys, tokens, or passwords**
+- Do not commit `.env` files or private credentials (see `.gitignore`)
+- `config/settings.yaml` only stores paths and public base URLs
 
 ## How It Works (End-to-End)
 
 ### 1) Data Ingestion
 
-The pipeline starts by collecting historical F1 data:
+The pipeline starts by collecting historical F1 data from Jolpica (see **Data Sources & Training Data** above):
 
 - `ingest_jolpica.py`
   - Pulls race results (`grid`, `finish_position`, `points`, status, etc.)
@@ -141,10 +180,11 @@ Prediction flow:
 - Aligns inference features with training schema
 - Runs `predict_proba` and returns top drivers by predicted probability
 
-### 7) Frontend Dashboard
+### 7) Frontend
 
 The frontend:
-- Loads available seasons and rounds from API
+- Home page (`/`) with entry to the dashboard
+- Dashboard (`/predict.html`) loads seasons and rounds from the API
 - Shows recent driver form for selected season and round
 - Sends prediction requests based on selected target
 - Displays ranked probabilities in a prediction table
