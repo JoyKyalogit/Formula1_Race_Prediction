@@ -31,9 +31,7 @@ html {
 body {
   margin: 0;
   min-height: 100vh;
-  background:
-    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(57, 217, 138, 0.04), transparent 50%),
-    var(--bg);
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font);
   font-size: 17px;
@@ -722,9 +720,7 @@ select:focus {
 
 /* —— Home page —— */
 .home-body {
-  background:
-    radial-gradient(ellipse 50% 40% at 10% 80%, rgba(57, 217, 138, 0.05), transparent 45%),
-    var(--bg);
+  background: var(--bg);
 }
 
 .home {
