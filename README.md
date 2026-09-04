@@ -1,246 +1,144 @@
-# Formula 1 Race Prediction Project
+# Formula 1 Race Predictor
 
-An end-to-end machine learning project that predicts race outcomes in Formula 1 using historical race data, qualifying data, and engineered form features.
+**Live app:** [https://f1-race-predictor-t21v.onrender.com/](https://f1-race-predictor-t21v.onrender.com/)
 
-## Live Demo
-https://f1-race-predictor-t21v.onrender.com/
+An end-to-end ML product that predicts Formula 1 race outcomes (podium / race win) using historical results, qualifying data, and engineered driver form features — then serves those predictions through a FastAPI backend and interactive dashboard.
 
-The app provides:
-- A data pipeline from ingestion to model-ready tables
-- Binary prediction models for `top 3 finish` and `race winner`
-- A FastAPI backend for inference
-- A frontend dashboard for interactive predictions and driver form insights
+Built to demonstrate a full production-style workflow: **data → features → models → API → UI → cloud deploy**.
 
-## Overview
+---
 
-- Helps compare drivers before a race using data-driven probabilities
-- Turns raw motorsport data into practical race intelligence
-- Demonstrates a full production-style ML workflow:
-  - data ingestion
-  - cleaning and feature engineering
-  - model training and evaluation
-  - API serving and UI delivery
-- Easy to extend with additional sources (OpenF1/FastF1) and features
+## Highlights
 
-## Project Structure
+- End-to-end ML pipeline: ingestion, cleaning, leakage-aware features, training, evaluation
+- FastAPI inference API with season/round selection
+- Interactive dashboard for predictions and recent driver form
+- Deployed on Render with model artifacts included in the repo
 
-`app/`
-- `api.py`: FastAPI backend with endpoints for seasons, rounds, driver summary, and predictions
+---
 
-`src/ingestion/`
-- `ingest_jolpica.py`: Pulls race results and qualifying from Jolpica (Ergast mirror)
-- `ingest_openf1.py`: Pulls meetings, sessions, and laps from OpenF1
-- `ingest_fastf1.py`: Pulls lap and weather data via FastF1
+## Try it in 30 seconds
 
-`src/processing/`
-- `clean_data.py`: Merges/cleans ingested data and creates modeling targets
+1. Open the live demo: [f1-race-predictor-t21v.onrender.com](https://f1-race-predictor-t21v.onrender.com/)
+2. Go to the dashboard
+3. Pick a **season**, **round**, and target (**Top 3** or **Win**)
+4. Click **Predict Results** to see ranked driver probabilities
 
-`src/features/`
-- `build_features.py`: Creates historical and rolling-performance features
+> Free Render hosting may sleep when idle — the first load can take ~30–60 seconds.
 
-`src/models/`
-- `train.py`: Trains XGBoost pipelines and saves model artifacts
-- `evaluate.py`: Evaluates holdout data and writes metrics
+---
 
-`frontend/`
-- `index.html`: home page
-- `predict.html`, `styles.css`, `app.js`: prediction dashboard UI
+## What it does
 
-`data/`
-- `raw/`: downloaded source datasets (kept local; not required in git)
-- `processed/`: cleaned and feature-engineered datasets
+| Capability | Detail |
+| --- | --- |
+| Predictions | Probability a driver finishes **top 3** or **wins** a selected race |
+| Form insights | Recent average finish and points over the last 5 races |
+| Data pipeline | Public F1 data → cleaned tables → feature matrix → trained models |
+| Serving | REST API + home page + prediction dashboard |
 
-`artifacts/`
-- Saved model files (`*.pkl`)
+---
 
-`metrics/`
-- Evaluation JSON outputs
+## Tech stack
 
-`config/`
-- `settings.yaml`: base settings and public API base URLs (no secrets)
+**ML / Data:** Python, pandas, scikit-learn, XGBoost, Parquet  
+**API:** FastAPI, Uvicorn  
+**Frontend:** HTML, CSS, JavaScript  
+**Data source:** Jolpica (public Ergast-compatible F1 API)  
+**Deploy:** Render (`render.yaml`)
 
-## Data Sources & Training Data
+---
 
-### Primary source (baseline models)
+## Architecture
 
-The models are trained on **historical Formula 1 race results and qualifying data** obtained from **Jolpica**, a public Ergast-compatible F1 API.
+```text
+Jolpica API
+    ↓
+Ingestion → Cleaning → Feature engineering
+    ↓
+XGBoost models (top-3 / winner)
+    ↓
+FastAPI  →  Home + Dashboard UI
+    ↓
+Render (production)
+```
 
-- **API:** `https://api.jolpi.ca/ergast/f1`
-- **How it is obtained:** `python -m src.ingestion.ingest_jolpica` downloads JSON over HTTP (no API key required), then saves parquet files under `data/raw/`
-- **What is downloaded:**
-  - Race results: season, round, circuit, driver, constructor, grid, finish position, points, status
-  - Qualifying: qualifying position (and Q1/Q2/Q3 times when present)
-- **Typical season range used in this project:** **2018–2025** (configurable via `--start-season` / `--end-season`)
+**Training design (high level):**
+- Source: historical race results + qualifying (typically 2018–2025)
+- Split: train on seasons before 2025; hold out 2025+
+- Features: grid, qualifying, rolling form, constructor form, track history, DNF trend
+- Targets: `is_top3`, `is_winner`
 
-### What the models were trained on
+No API keys are required for the baseline Jolpica pipeline.
 
-After cleaning and feature engineering, training uses `data/processed/model_table.parquet`.
+---
 
-- **Train set:** seasons **before 2025** (`season < 2025`) — roughly **2018–2024** race history in the default workflow
-- **Holdout / evaluation:** seasons **2025 and later**
-- **Targets:**
-  - `is_top3` — finished in positions 1–3
-  - `is_winner` — finished in position 1
-- **Main inputs:** grid, qualifying position, rolling driver/constructor form, track history, DNF trend, plus constructor and circuit categories
+## Repository layout
 
-### Optional sources (not required for the current baseline)
+```text
+app/           FastAPI service
+frontend/      Home + prediction dashboard
+src/           Ingestion, processing, features, training, evaluation
+artifacts/     Trained model files (*.pkl)
+data/processed Model table used for inference
+config/        Paths and public API settings
+render.yaml    Render deployment config
+```
 
-Scripts exist for enrichment but are **not** required for the shipped baseline models:
+---
 
-- OpenF1 (`ingest_openf1.py`) — meetings, sessions, laps
-- FastF1 (`ingest_fastf1.py`) — detailed laps / weather
-
-### Secrets & credentials
-
-- The **Jolpica baseline pipeline does not use API keys, tokens, or passwords**
-- Do not commit `.env` files or private credentials (see `.gitignore`)
-- `config/settings.yaml` only stores paths and public base URLs
-
-## How It Works (End-to-End)
-
-### 1) Data Ingestion
-
-The pipeline starts by collecting historical F1 data from Jolpica (see **Data Sources & Training Data** above):
-
-- `ingest_jolpica.py`
-  - Pulls race results (`grid`, `finish_position`, `points`, status, etc.)
-  - Pulls qualifying positions
-  - Saves parquet files into `data/raw/`
-
-- Optional enrichment:
-  - `ingest_openf1.py` for sessions/laps
-  - `ingest_fastf1.py` for detailed laps/weather
-
-### 2) Data Cleaning and Modeling Base Table
-
-`clean_data.py`:
-- Loads latest Jolpica result and qualifying parquet files
-- Deduplicates race-driver rows
-- Merges qualifying onto results
-- Converts key columns to numeric types
-- Handles missing values
-- Builds target columns:
-  - `is_top3` (1 if finish position <= 3)
-  - `is_winner` (1 if finish position == 1)
-- Saves `data/processed/model_base.parquet`
-
-### 3) Feature Engineering
-
-`build_features.py` creates historical features using past-only windows (no leakage):
-
-- `avg_finish_last5`
-- `consistency_std_last5`
-- `driver_points_last5`
-- `constructor_points_last5`
-- `track_avg_finish_hist`
-- `dnf_last5`
-
-Then saves `data/processed/model_table.parquet`.
-
-### 4) Model Training
-
-`train.py`:
-- Uses a time-aware split:
-  - train: seasons `< 2025`
-  - holdout: seasons `>= 2025`
-- Features include:
-  - Numeric: grid, qualifying, rolling form, constructor form, track history, DNF trend
-  - Categorical: constructor, circuit
-- Builds a preprocessing + model pipeline:
-  - numeric imputation + scaling
-  - categorical imputation + one-hot encoding
-  - XGBoost classifier
-- Saves:
-  - model artifact in `artifacts/` (`is_top3_xgb.pkl`, `is_winner_xgb.pkl`)
-  - holdout dataset for evaluation
-
-### 5) Evaluation
-
-`evaluate.py`:
-- Loads holdout data
-- Scores each saved model for a target
-- Writes metrics to `metrics/{target}_metrics.json`:
-  - accuracy
-  - precision
-  - recall
-  - confusion matrix
-
-### 6) API Inference
-
-`app/api.py` serves:
-- `GET /api/health`
-- `GET /api/seasons`
-- `GET /api/rounds?season=YYYY`
-- `GET /api/driver-summary?season=YYYY&round=R`
-- `POST /api/predict`
-
-Prediction flow:
-- Filters selected season and round
-- Loads target-specific model artifact
-- Aligns inference features with training schema
-- Runs `predict_proba` and returns top drivers by predicted probability
-
-### 7) Frontend
-
-The frontend:
-- Home page (`/`) with entry to the dashboard
-- Dashboard (`/predict.html`) loads seasons and rounds from the API
-- Shows recent driver form for selected season and round
-- Sends prediction requests based on selected target
-- Displays ranked probabilities in a prediction table
-
-## Installation
+## Run locally
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate  # Linux/macOS
-# .venv\Scripts\activate   # Windows PowerShell
-
+source .venv/bin/activate          # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+uvicorn app.api:app --reload
 ```
 
-## Typical Run Workflow
+Then open [http://127.0.0.1:8000](http://127.0.0.1:8000).
 
-### A) Build datasets
+Model artifacts are already in the repo for local/demo use. To rebuild from scratch:
 
 ```bash
 python -m src.ingestion.ingest_jolpica --start-season 2018 --end-season 2025 --out-dir data/raw
 python -m src.processing.clean_data
 python -m src.features.build_features
-```
-
-### B) Train models
-
-```bash
 python -m src.models.train --target is_top3
 python -m src.models.train --target is_winner
 ```
 
-### C) Evaluate models
+---
 
-```bash
-python -m src.models.evaluate --target is_top3
-python -m src.models.evaluate --target is_winner
+## API snapshot
+
+| Method | Endpoint | Purpose |
+| --- | --- | --- |
+| `GET` | `/api/health` | Health check |
+| `GET` | `/api/seasons` | List seasons |
+| `GET` | `/api/rounds?season=YYYY` | List rounds |
+| `GET` | `/api/driver-summary` | Recent driver form |
+| `POST` | `/api/predict` | Ranked race probabilities |
+
+```json
+{ "season": 2024, "round": 5, "target": "is_top3" }
 ```
 
-### D) Start API + UI
+---
 
-```bash
-uvicorn app.api:app --reload
-```
+## Limitations 
 
-Then open the local app URL printed by Uvicorn (usually `http://127.0.0.1:8000`).
+- Predictions are **probabilities**, not guaranteed outcomes
+- Focus is podium / win classification — not full finishing-order simulation
+- Weather and detailed telemetry are not in the baseline feature set
 
-## Notes and Limitations
+---
 
-- Predictions are probabilistic estimates, not guaranteed outcomes.
-- Performance depends on data freshness and feature quality.
-- Current model is classification-focused (`top3` / `winner`), not full finishing order simulation.
-- Optional OpenF1/FastF1 ingestion is included for future enrichment but not required for the current baseline pipeline.
+## Next improvements
 
-## Future Improvements
+- Probability calibration
+- Weather / session features
+- One-command pipeline orchestration
 
-- Add uncertainty calibration and probability reliability plots
-- Include weather/session features in final model table
-- Add circuit-type or team strategy features
-- Automate end-to-end pipeline with one orchestrated command
+---
+
